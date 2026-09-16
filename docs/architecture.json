@@ -1,0 +1,227 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kiến trúc tổng đài Asterisk PBX",
+    "quality_profile": "showcase",
+    "viewBox": [1340, 760],
+    "views": [
+      {
+        "id": "ivr-flow",
+        "label": "Luồng IVR 7000",
+        "focus": ["sip-client", "asterisk", "dialplan", "ivr", "audio-prompts", "departments"],
+        "note": "Theo dõi cuộc gọi SIP qua định tuyến theo giờ đến ba phòng ban."
+      },
+      {
+        "id": "voice-services",
+        "label": "Dịch vụ thoại",
+        "focus": ["dialplan", "director", "voicemail", "conference"],
+        "note": "Các nhánh voicemail giám đốc, đăng nhập hộp thư và hội nghị MeetMe."
+      },
+      {
+        "id": "direct-dial",
+        "label": "Gọi trực tiếp",
+        "focus": ["sip-client", "asterisk", "dialplan", "outbound", "departments"],
+        "note": "Các mẫu quay số trực tiếp _6XXX và tiền tố gọi ra 8."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "sip-client",
+      "type": "external",
+      "label": "Điện thoại SIP",
+      "sublabel": "Ví dụ: máy nhánh 1001",
+      "pos": [40, 320],
+      "size": [160, 72]
+    },
+    {
+      "id": "asterisk",
+      "type": "backend",
+      "label": "Trixbox / Asterisk",
+      "sublabel": "Máy chủ tổng đài IP PBX",
+      "pos": [250, 320],
+      "size": [170, 72]
+    },
+    {
+      "id": "dialplan",
+      "type": "backend",
+      "label": "Dialplan tùy chỉnh",
+      "sublabel": "from-internal-custom",
+      "tag": "extensions_custom.conf",
+      "pos": [480, 320],
+      "size": [190, 72]
+    },
+    {
+      "id": "ivr",
+      "type": "backend",
+      "label": "IVR 7000",
+      "sublabel": "Theo giờ · menu tối đa 3 lần",
+      "pos": [740, 320],
+      "size": [180, 72]
+    },
+    {
+      "id": "departments",
+      "type": "frontend",
+      "label": "Các phòng ban",
+      "sublabel": "6001 Tài vụ · 6002 Nhân sự · 6003 Kinh doanh",
+      "pos": [1030, 320],
+      "size": [250, 72]
+    },
+    {
+      "id": "audio-prompts",
+      "type": "cloud",
+      "label": "Thông báo âm thanh",
+      "sublabel": "Welcome · Menu · Invalid · Goodbye · Closed",
+      "tag": "audio/*.wav",
+      "pos": [740, 110],
+      "size": [250, 72]
+    },
+    {
+      "id": "director",
+      "type": "frontend",
+      "label": "Giám đốc 6000",
+      "sublabel": "Đổ chuông 15 giây",
+      "pos": [740, 540],
+      "size": [180, 72]
+    },
+    {
+      "id": "voicemail",
+      "type": "database",
+      "label": "Voicemail",
+      "sublabel": "6000@default · đăng nhập 6999",
+      "tag": "voicemail.conf",
+      "pos": [1030, 540],
+      "size": [230, 72]
+    },
+    {
+      "id": "conference",
+      "type": "messagebus",
+      "label": "Hội nghị MeetMe 9489",
+      "sublabel": "PIN người dùng 1234 · quản trị 123448",
+      "tag": "meetme.conf",
+      "pos": [480, 540],
+      "size": [210, 72]
+    },
+    {
+      "id": "outbound",
+      "type": "external",
+      "label": "Đích SIP bên ngoài",
+      "sublabel": "Quay 8 + số đích",
+      "pos": [480, 110],
+      "size": [190, 72]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Máy chủ Asterisk",
+      "wraps": ["asterisk", "dialplan", "ivr", "audio-prompts", "director", "voicemail", "conference"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "sip-registration-call",
+      "from": "sip-client",
+      "to": "asterisk",
+      "label": "SIP / RTP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "asterisk-routing",
+      "from": "asterisk",
+      "to": "dialplan",
+      "label": "xử lý extension",
+      "labelAt": [450, 406],
+      "variant": "emphasis"
+    },
+    {
+      "id": "dialplan-ivr",
+      "from": "dialplan",
+      "to": "ivr",
+      "label": "gọi 7000",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ivr-departments",
+      "from": "ivr",
+      "to": "departments",
+      "label": "phím 1 / 2 / 3 hoặc 6XXX",
+      "labelAt": [975, 406],
+      "variant": "emphasis"
+    },
+    {
+      "id": "prompts-to-ivr",
+      "from": "audio-prompts",
+      "to": "ivr",
+      "label": "Playback / Background",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "dialplan-outbound",
+      "from": "dialplan",
+      "to": "outbound",
+      "label": "_8. → SIP/${EXTEN:1}",
+      "variant": "dashed"
+    },
+    {
+      "id": "dialplan-conference",
+      "from": "dialplan",
+      "to": "conference",
+      "label": "gọi 9489",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [530, 500]
+    },
+    {
+      "id": "dialplan-director",
+      "from": "dialplan",
+      "to": "director",
+      "label": "gọi 6000",
+      "labelAt": [760, 510]
+    },
+    {
+      "id": "director-voicemail",
+      "from": "director",
+      "to": "voicemail",
+      "label": "bận / không trả lời",
+      "variant": "dashed"
+    },
+    {
+      "id": "dialplan-voicemail-login",
+      "from": "dialplan",
+      "to": "voicemail",
+      "label": "đăng nhập 6999",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Định tuyến chính",
+      "items": [
+        "7000 mở IVR theo hai khung giờ làm việc",
+        "Ngoài giờ phát Closed_48 rồi kết thúc cuộc gọi"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Dịch vụ nội bộ",
+      "items": [
+        "9489: hội nghị MeetMe có PIN",
+        "6000: chuyển voicemail khi bận hoặc không trả lời"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Cấu hình cần đối chiếu",
+      "items": [
+        "Dòng mailbox 6000 trong voicemail.conf hiện khác ảnh minh chứng",
+        "Không dùng trực tiếp các PIN mẫu trong môi trường production"
+      ]
+    }
+  ]
+}
